@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import chess
+import tensorflow as tf
 from tensorflow import keras
 import matplotlib.pyplot as plt
 from keras.models import Sequential
@@ -11,7 +12,17 @@ from keras import regularizers
 from keras.optimizers import Adam
 
 
-
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        # Restrict TensorFlow to only allocate memory on the first GPU
+        tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
+        
+        # Set memory growth
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except RuntimeError as e:
+        print(e)
 
 train_df = pd.read_csv('train.csv', index_col='id')
 
