@@ -1,0 +1,16 @@
+# Ignore the virtual environment folder
+.venv/
+
+# Ignore the requirements folder
+requirements/
+
+# Ignore the stockfish folder
+stockfish/
+
+# Ignore the games.pgn file
+games.pgn
+
+__pycache__/
+
+Lichess Elite Database.7z
+Lichess Elite Database/

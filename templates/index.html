@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Game</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Chess Game</h1>
+    <div id="board">{{ board_svg|safe }}</div>
+    <input type="text" id="moveInput" placeholder="Enter your move (e.g., e4)">
+    <button id="submitMove">Submit Move</button>
+    <div id="message"></div>
+
+    <script>
+        $('#submitMove').click(function() {
+            const move = $('#moveInput').val();
+            $.ajax({
+                type: 'POST',
+                url: '/make_move',
+                contentType: 'application/json',
+                data: JSON.stringify({ move: move }),
+                success: function(response) {
+                    if (response.error) {
+                        $('#message').text(response.error);
+                    } else {
+                        $('#board').html(response.board_svg);
+                        $('#moveInput').val('');
+                        if (response.game_over) {
+                            $('#message').text('Game over!');
+                        } else {
+                            $('#message').text('AI move: ' + response.ai_move);
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
