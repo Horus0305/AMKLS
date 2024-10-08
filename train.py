@@ -5,10 +5,15 @@ from tensorflow import keras
 import matplotlib.pyplot as plt
 from keras.models import Sequential
 from keras.layers import Dense, Flatten, Dropout
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Flatten, BatchNormalization, LeakyReLU
+from keras import regularizers
+from keras.optimizers import Adam
 
 
 
-train_df = pd.read_csv('chess_dataset.csv', index_col='id')
+
+train_df = pd.read_csv('train.csv', index_col='id')
 
 print(train_df.head())
 
@@ -74,24 +79,36 @@ X_val = np.stack(val_df['board'].apply(encode_fen_string))
 y_val = val_df['black_score']
 
 
-# With the Keras Sequential model we can stack neural network layers together
+
+
 model = Sequential([
     Flatten(),
-    Dense(512, activation='relu'),
+    Dense(1024, kernel_regularizer=regularizers.l2(0.001)),
+    LeakyReLU(alpha=0.1),
+    BatchNormalization(),
+    Dropout(0.3),
+    
+    Dense(512, kernel_regularizer=regularizers.l2(0.001)),
+    LeakyReLU(alpha=0.1),
+    BatchNormalization(),
+    Dropout(0.3),
+    
+    Dense(128, kernel_regularizer=regularizers.l2(0.001)),
+    LeakyReLU(alpha=0.1),
+    BatchNormalization(),
     Dropout(0.2),
-    Dense(128, activation='relu'),
-    Dropout(0.2),
-    Dense(1),
+    
+    Dense(1),  
 ])
 
-model.compile(
-    optimizer='adam',
-    loss='mean_squared_error')
+# Compile the model
+model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error')
+
 
 history = model.fit(
     X_train,
     y_train,
-    epochs=100,
+    epochs=50,
     validation_data=(X_val, y_val))
 
 model.save('model_512_128_1_other.keras')

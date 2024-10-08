@@ -25,7 +25,7 @@ def filter_games(file_path, min_rating=2200):
                 yield game
 
 # Process the filtered games
-for game in filter_games('games.pgn'):
+for game in filter_games('selectedgames.pgn'):
     board = chess.Board()
     for move in game.mainline_moves():
         board.push(move)
@@ -50,7 +50,7 @@ for game in filter_games('games.pgn'):
                 })
                 entry_count += 1
                 print(entry_count)
-                
+
         except Exception as e:
             print(f"An error occurred while analyzing the position: {e}")
 
