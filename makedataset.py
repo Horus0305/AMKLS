@@ -25,36 +25,26 @@ def filter_games(file_path, min_rating=2200):
                 yield game
 
 # Process the filtered games
-for game in filter_games('selectedgames.pgn'):
+for game in filter_games('games.pgn'):
     board = chess.Board()
     for move in game.mainline_moves():
         board.push(move)
+        board_fen = board.fen()  # Get FEN string
+        result = engine.analyse(board, chess.engine.Limit(time=1))  # Analyze position
+        black_score = result['score'].relative.score()  # Get the score for black
+        best_move = result['pv'][0]  # Get the best move
 
-        # Check if it's Black's turn to move (after White's move)
-        if board.turn == chess.BLACK:
-            board_fen = board.fen()  # Get FEN string
-            result = engine.analyse(board, chess.engine.Limit(time=1))  # Analyze position
-            
-            # Check if 'pv' exists in the result
-            if 'pv' in result and result['pv']:
-                black_score = result['score'].relative.score()  # Get the score for black
-                best_move = result['pv'][0]  # Get the best move
-
-                # Append the data
-                data.append({
-                    'id': len(data),  # Use current length as ID
-                    'board': board_fen,
-                    'black_score': black_score,
-                    'best_move': best_move.uci()
-                })
-                
-                entry_count += 1  # Increment entry count
-                print(entry_count)
+        # Append the data
+        data.append({
+            'id': len(data),  # Use current length as ID
+            'board': board_fen,
+            'black_score': black_score,
+            'best_move': best_move.uci()
+        })
+        entry_count+=1
+        print(entry_count)
 
 # Create DataFrame and save to CSV
 df = pd.DataFrame(data)
 df.to_csv('chess_dataset.csv', index=False)
-
-print(f"Total entries processed: {entry_count}")  # Print the total number of entries
-
 engine.quit()

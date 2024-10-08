@@ -75,6 +75,7 @@ def play_nn(fen, player='b'):
         elif score < minScore:
             worst_move = move
             minScore = score
+        print(f'Best move: {best_move} Worst Move: {worst_move}')
 
     return str(worst_move) if player == 'b' else str(best_move)
 
