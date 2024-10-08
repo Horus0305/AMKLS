@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import chess
 import numpy as np
+import random
 import tensorflow as tf
 
 app = Flask(__name__)
@@ -56,6 +57,16 @@ def evaluate_board(board):
         score -= len(board.pieces(piece_type, chess.BLACK)) * piece_values[piece_type]
     return score
 
+def get_random_move(board):
+      # Create a chess board from the FEN string
+    legal_moves = list(board.legal_moves)  # Get all legal moves as a list
+    
+    if legal_moves:  # Check if there are any legal moves
+        random_move = random.choice(legal_moves)  # Choose a random legal move
+        return str(random_move)  # Return the move as a string
+    else:
+        return None
+    
 def play_nn(fen, player='b'):
     board = chess.Board(fen=fen)
     best_move = ''
@@ -75,6 +86,10 @@ def play_nn(fen, player='b'):
         elif score < minScore:
             worst_move = move
             minScore = score
+        if not best_move or worst_move:
+            best_move=get_random_move(board)
+            worst_move=get_random_move(board)
+
         print(f'Best move: {best_move} Worst Move: {worst_move}')
 
     return str(worst_move) if player == 'b' else str(best_move)
