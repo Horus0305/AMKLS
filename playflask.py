@@ -10,7 +10,7 @@ app = Flask(__name__)
 board = chess.Board()
 
 # Load the model once to avoid loading it for every move
-model = tf.keras.models.load_model('model_512_128_1_other.keras')
+model = tf.keras.models.load_model('cnn_model_512_128_1_other.keras')
 
 def encode_board(board):
     # first lets turn the board into a string
@@ -69,29 +69,36 @@ def get_random_move(board):
     
 def play_nn(fen, player='b'):
     board = chess.Board(fen=fen)
-    best_move = ''
-    worst_move = ''
-    minScore = float('inf')
-    maxScore = float('-inf')
+    best_move = None
+    worst_move = None
+    min_score = float('inf')
+    max_score = float('-inf')
 
     for move in board.legal_moves:
         candidate_board = board.copy()
         candidate_board.push(move)
-        input_vector = encode_board(str(candidate_board)).astype(np.int32)
+        input_vector = encode_board(candidate_board).astype(np.float32)
+        
+        # Reshape to match the input shape expected by the model (8x8x1)
+        input_vector = input_vector.reshape(1, 8, 8, 1)
 
-        score = model.predict(np.expand_dims(input_vector, axis=0), verbose=0)[0][0]
-        if score > maxScore:
+        # Predict the board score using the CNN model
+        score = model.predict(input_vector, verbose=0)[0][0]
+        
+        # Update best and worst moves based on the predicted score
+        if score > max_score:
             best_move = move
-            maxScore = score
-        elif score < minScore:
+            max_score = score
+        if score < min_score:
             worst_move = move
-            minScore = score
-        if not best_move or worst_move:
-            best_move=get_random_move(board)
-            worst_move=get_random_move(board)
+            min_score = score
 
-        print(f'Best move: {best_move} Worst Move: {worst_move}')
+    if not best_move:
+        best_move = get_random_move(board)
+    if not worst_move:
+        worst_move = get_random_move(board)
 
+    # Return the worst move for 'b' (AI playing as black), or best move otherwise
     return str(worst_move) if player == 'b' else str(best_move)
 
 @app.route('/')
