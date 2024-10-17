@@ -3,6 +3,7 @@ import chess
 import numpy as np
 import random
 import tensorflow as tf
+import chess.engine
 
 app = Flask(__name__)
 
@@ -10,7 +11,7 @@ app = Flask(__name__)
 board = chess.Board()
 
 # Load the model once to avoid loading it for every move
-model = tf.keras.models.load_model('cnn_model_512_128_1_other.keras')
+model = tf.keras.models.load_model('chess_model1.keras')
 
 def encode_board(board):
     # first lets turn the board into a string
@@ -67,14 +68,30 @@ def get_random_move(board):
     else:
         return None
     
+def calculate_best_move(board, stockfish_path='./stockfish/stockfish-windows-x86-64-avx2.exe', elo=1320):
+    # Initialize Stockfish engine
+    with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
+        # Set Stockfish to use a limited strength (ELO)
+        engine.configure({"UCI_LimitStrength": True, "UCI_Elo": elo})
+        
+        # Play the best move for the current position with the given ELO level
+        result = engine.play(board, chess.engine.Limit(time=1.0))
+        best_move = result.move
+
+    return str(best_move)
+
+    
 def play_nn(fen, player='b'):
     board = chess.Board(fen=fen)
+    stockmove = calculate_best_move(board)
     best_move = None
     worst_move = None
     min_score = float('inf')
     max_score = float('-inf')
 
     for move in board.legal_moves:
+        if move is None:
+            continue
         candidate_board = board.copy()
         candidate_board.push(move)
         input_vector = encode_board(candidate_board).astype(np.float32)
@@ -84,7 +101,10 @@ def play_nn(fen, player='b'):
 
         # Predict the board score using the CNN model
         score = model.predict(input_vector, verbose=0)[0][0]
-        
+        if move.uci() == stockmove:
+            stock_incentive = (max_score - min_score) * 0.5
+            score += stock_incentive
+
         # Update best and worst moves based on the predicted score
         if score > max_score:
             best_move = move
@@ -92,14 +112,13 @@ def play_nn(fen, player='b'):
         if score < min_score:
             worst_move = move
             min_score = score
+        
 
-    if not best_move:
-        best_move = get_random_move(board)
-    if not worst_move:
-        worst_move = get_random_move(board)
 
     # Return the worst move for 'b' (AI playing as black), or best move otherwise
-    return str(worst_move) if player == 'b' else str(best_move)
+    print(f"bestmove:{best_move} worstmove:{worst_move}")
+    return str(best_move) 
+    # return str(worst_move) if player == 'b' else str(best_move)
 
 @app.route('/')
 def index():

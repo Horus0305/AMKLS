@@ -6,6 +6,9 @@ from tensorflow import keras
 import matplotlib.pyplot as plt
 from keras.models import Sequential
 from keras.layers import Dense, Flatten, Dropout
+from keras.regularizers import l2
+from keras.optimizers import Adam
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
 # Load your dataset
 train_df = pd.read_csv('train.csv', index_col='id')
@@ -44,25 +47,30 @@ X_mean = X.mean()
 X_std = X.std()
 X_normalized = (X - X_mean) / X_std
 
-# Build a simple neural network model
+# Build a simple neural network model with L2 regularization
 model = Sequential([
     Flatten(input_shape=(8, 8)),  # Flatten the 8x8 input to a 1D array
-    Dense(128, activation='relu'),
+    Dense(128, activation='relu', kernel_regularizer=l2(0.01)),  # L2 regularization
     Dropout(0.3),
-    Dense(64, activation='relu'),
+    Dense(64, activation='relu', kernel_regularizer=l2(0.01)),  # L2 regularization
     Dropout(0.3),
     Dense(1)  # Output layer for predicting the normalized black score
 ])
 
 # Compile the model with MSE and MAE as metrics
-model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_squared_error', 'mean_absolute_error'])
+model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error', metrics=['mean_squared_error', 'mean_absolute_error'])
 
 # Train the model
+early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+lr_reducer = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
+
+# Train the model with callbacks
 history = model.fit(
-    X_normalized, y_normalized,  # Use normalized inputs and target variable
+    X_normalized, y_normalized,
     epochs=100,
     batch_size=10,
-    validation_split=0.2  # Use 20% of the data for validation
+    validation_split=0.2,
+    callbacks=[early_stopping, lr_reducer]  # Add callbacks here
 )
 
 # Save the model
@@ -74,22 +82,27 @@ preds = preds_normalized * y_std + y_mean  # Denormalize predictions
 
 # Plot training and validation loss
 plt.style.use('ggplot')
+plt.figure(figsize=(12, 6))
+plt.subplot(1, 3, 1)
 plt.plot(history.history['loss'], label='train loss')
 plt.plot(history.history['val_loss'], label='val loss')
 plt.legend()
 plt.title('Loss During Training')
-plt.show()
 
 # Plot Mean Squared Error (MSE)
+plt.subplot(1, 3, 2)
 plt.plot(history.history['mean_squared_error'], label='train MSE')
 plt.plot(history.history['val_mean_squared_error'], label='val MSE')
 plt.legend()
 plt.title('MSE During Training')
-plt.show()
 
 # Plot Mean Absolute Error (MAE)
+plt.subplot(1, 3, 3)
 plt.plot(history.history['mean_absolute_error'], label='train MAE')
 plt.plot(history.history['val_mean_absolute_error'], label='val MAE')
 plt.legend()
 plt.title('MAE During Training')
+
+# Show all plots
+plt.tight_layout()
 plt.show()
