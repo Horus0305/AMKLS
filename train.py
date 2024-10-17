@@ -5,23 +5,12 @@ import tensorflow as tf
 from tensorflow import keras
 import matplotlib.pyplot as plt
 from keras.models import Sequential
-from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout, BatchNormalization, LeakyReLU
-from keras import regularizers
-from keras.optimizers import Adam
+from keras.layers import Dense, Flatten, Dropout
 
 
-# Set up GPU memory growth and visibility
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-    try:
-        tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-    except RuntimeError as e:
-        print(e)
 
-# Load the dataset
 train_df = pd.read_csv('train.csv', index_col='id')
+
 print(train_df.head())
 
 # Function to split the data into train and validation sets
