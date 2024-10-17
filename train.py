@@ -8,7 +8,7 @@ from keras.layers import Dense, Flatten, Dropout
 
 
 
-train_df = pd.read_csv('chess_dataset.csv', index_col='id')
+train_df = pd.read_csv('train.csv', index_col='id')
 
 print(train_df.head())
 
