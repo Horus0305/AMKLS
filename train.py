@@ -6,6 +6,11 @@ from tensorflow import keras
 import matplotlib.pyplot as plt
 from keras.models import Sequential
 from keras.layers import Dense, Flatten, Dropout
+from keras.models import Sequential
+from keras.layers import Dense, LeakyReLU, BatchNormalization, MaxPooling2D, Flatten, Dropout, Conv2D
+from keras.optimizers import Adam
+from keras import regularizers
+
 
 
 
